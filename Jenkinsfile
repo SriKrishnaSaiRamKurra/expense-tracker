@@ -1,11 +1,6 @@
 pipeline {
     agent any
 
-    environment {
-        IMAGE_NAME = "expense-tracker"
-        IMAGE_TAG = "latest"
-    }
-
     stages {
 
         stage('Clone Repository') {
@@ -14,29 +9,39 @@ pipeline {
             }
         }
 
-        stage('Build Docker Image') {
+        stage('Stop Old Containers') {
             steps {
-                script {
-                    docker.build("${IMAGE_NAME}:${IMAGE_TAG}")
-                }
+                sh 'docker compose down || true'
             }
         }
 
-        stage('Show Docker Images') {
+        stage('Build Containers') {
             steps {
-                sh 'docker images'
+                sh 'docker compose build'
             }
         }
 
+        stage('Start Containers') {
+            steps {
+                sh 'docker compose up -d'
+            }
+        }
+
+        stage('Show Running Containers') {
+            steps {
+                sh 'docker ps'
+            }
+        }
     }
 
     post {
+
         success {
-            echo 'Docker Image Built Successfully!'
+            echo 'Application deployed successfully!'
         }
 
         failure {
-            echo 'Build Failed!'
+            echo 'Pipeline failed!'
         }
     }
 }
